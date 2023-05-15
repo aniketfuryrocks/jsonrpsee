@@ -555,9 +555,8 @@ async fn handle_backend_messages<S: TransportSenderT, R: TransportReceiverT>(
 					let mut range = None;
 
 					for r in raw_responses {
-						let Ok(response) = serde_json::from_str::<Response<_>>(r.get()) else {
-							return Err(unparse_error(raw));
-						};
+						let response =
+							serde_json::from_str::<Response<_>>(r.get()).map_err(|_| unparse_error(raw))?;
 
 						let id = response.id.try_parse_inner_as_number().ok_or(Error::InvalidRequestId)?;
 						let result = ResponseSuccess::try_from(response).map(|s| s.result);
