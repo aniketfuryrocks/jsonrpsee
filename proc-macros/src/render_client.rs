@@ -77,13 +77,19 @@ impl RpcDescription {
 		};
 
 		// The path (eg std::result::Result) should have a final segment like 'Result'.
-		let Some(type_name) = type_path.path.segments.last_mut() else {
-			return quote_spanned!(ty.span() => compile_error!("Expecting this path to end in something like 'Result<Foo, Err>'"));
+		let type_name = match type_path.path.segments.last_mut() {
+			Some(type_name) => type_name,
+			_ => {
+				return quote_spanned!(ty.span() => compile_error!("Expecting this path to end in something like 'Result<Foo, Err>'"))
+			}
 		};
 
 		// Get the generic args eg the <T, E> in Result<T, E>.
-		let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) = &mut type_name.arguments else {
-			return quote_spanned!(ty.span() => compile_error!("Expecting something like 'Result<Foo, Err>' here, but got no generic args (eg no '<Foo,Err>')."));
+		let AngleBracketedGenericArguments { args, .. } = match &mut type_name.arguments {
+			PathArguments::AngleBracketed(args) => args,
+			_ => {
+				return quote_spanned!(ty.span() => compile_error!("Expecting something like 'Result<Foo, Err>' here, but got no generic args (eg no '<Foo,Err>')."))
+			}
 		};
 
 		if type_name.ident == "Result" {
