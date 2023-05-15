@@ -72,8 +72,11 @@ impl RpcDescription {
 	/// Verify and rewrite the return type (for methods).
 	fn return_result_type(&self, mut ty: syn::Type) -> TokenStream2 {
 		// We expect a valid type path.
-		let syn::Type::Path(ref mut type_path) = ty else  {
-			return quote_spanned!(ty.span() => compile_error!("Expecting something like 'Result<Foo, Err>' here. (1)"));
+		let type_path = match &mut ty {
+			syn::Type::Path(type_path) => type_path,
+			_ => {
+				return quote_spanned!(ty.span() => compile_error!("Expecting something like 'Result<Foo, Err>' here. (1)"))
+			}
 		};
 
 		// The path (eg std::result::Result) should have a final segment like 'Result'.
